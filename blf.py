@@ -2,10 +2,16 @@ import numpy as np
 import cv2
 import sys
 import math
+from multiprocessing import Pool
+
+FILTER_DIAMETER = 5
+SIGMA_I = 75
+SIGMA_S = 75
+PROC_NUM = 4
 
 
 def distance(x, y, i, j):
-    return np.sqrt((x-i)**2 + (y-j)**2)
+    return np.sqrt((x - i) ** 2 + (y - j) ** 2)
 
 
 def gaussian(x, sigma):
@@ -13,7 +19,7 @@ def gaussian(x, sigma):
 
 
 def apply_bilateral_filter(source, filtered_image, x, y, diameter, sigma_i, sigma_s):
-    hl = diameter/2
+    hl = diameter / 2
     i_filtered = 0
     Wp = 0
     i = 0
@@ -42,7 +48,8 @@ def apply_bilateral_filter(source, filtered_image, x, y, diameter, sigma_i, sigm
     filtered_image[x][y] = int(round(i_filtered))
 
 
-def bilateral_filter_own(source, filter_diameter, sigma_i, sigma_s):
+def bilateral_filter_own(args):
+    source, filter_diameter, sigma_i, sigma_s = args
     filtered_image = np.zeros(source.shape)
 
     i = 0
@@ -56,10 +63,29 @@ def bilateral_filter_own(source, filter_diameter, sigma_i, sigma_s):
 
 
 if __name__ == "__main__":
-    textimg = cv2.imread(str(sys.argv[1]), 0)
-    myselfimg = cv2.imread(str(sys.argv[2]), 0)
-    filter_opencv = cv2.bilateralFilter(myselfimg, 9, 100.0, 100.0)
-    filtered_image_own = bilateral_filter_own(myselfimg, 9, 100.0, 100.0)
+    rb256 = cv2.imread(str(sys.argv[1]))
+    blue, green, red = cv2.split(rb256)
+    cv2.imwrite("blue.jpg", blue)
+    cv2.imwrite("green.jpg", green)
+    cv2.imwrite("red.jpg", red)
+    merged = cv2.merge((blue, green, red))
+    cv2.imwrite("merged.jpg", merged)
+    pool = Pool(processes=PROC_NUM)
+    future_blue, future_green, future_red = pool.map(bilateral_filter_own, [(blue, FILTER_DIAMETER, SIGMA_I, SIGMA_S),
+                                                                            (green, FILTER_DIAMETER, SIGMA_I, SIGMA_S),
+                                                                            (red, FILTER_DIAMETER, SIGMA_I, SIGMA_S)])
+
+    filter_opencv = cv2.bilateralFilter(rb256, 5, 75, 75)
+    cv2.imwrite("how should look.jpg", filter_opencv)
+    # filtered_blue = bilateral_filter_own(blue, 5, 75, 75)
+    # filtered_green = bilateral_filter_own(green, 5, 75, 75)
+    # filtered_red = bilateral_filter_own(red, 5, 75, 75)
+    mered_own = cv2.merge((future_blue, future_green, future_red))
+    cv2.imwrite("my merge.jpg", mered_own)
+
+    # myselfimg = cv2.imread(str(sys.argv[2]), 0)
+    # filter_opencv = cv2.bilateralFilter(x32, 15, 300.0, 300.0)
+    # our_filter = bilateral_filter_own(x32, 9, 100.0, 100.0)
     # blury = bilateral_filter_own(myselfimg, 9, 150.0, 150.0)
-    cv2.imwrite("us.png", filtered_image_own)
-    cv2.imwrite("opencv.png", filter_opencv)
+    # cv2.imwrite("our_filter.png", our_filter)
+    # cv2.imwrite("opencv.png", filter_opencv)
