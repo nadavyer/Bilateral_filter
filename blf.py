@@ -1,6 +1,5 @@
 import numpy as np
 import cv2
-import sys
 import math
 from multiprocessing import Pool
 
@@ -57,16 +56,36 @@ def bilateral_filter_own(args):
 
 if __name__ == "__main__":
 
-    pixels = [[(10, 20, 30), (40, 50, 60), (70, 80, 90), (100, 110, 120),  (130, 140, 150), (200, 200, 200)]]
     # cv2.imwrite("pixelim.jpg", pixels)
     # arr = np.array(pixels, dtype=np.uint8)
-    rb256 = cv2.imread(str(sys.argv[1]))
-    blue, green, red = cv2.split(rb256)
+    data = np.zeros((3, 3, 3), dtype=np.uint8)
+    # data[0, 0] = [255, 255, 255]
+    # data[0, 1] = [255, 255, 255]
+    # data[0, 2] = [255, 255, 255]
+    # data[1, 0] = [255, 255, 255]
+    # data[1, 1] = [0, 0, 0]
+    # data[1, 2] = [255, 255, 255]
+    # data[2, 0] = [255, 255, 255]
+    # data[2, 1] = [255, 255, 255]
+    # data[2, 2] = [255, 255, 255]
+
+    data[0, 0] = [50, 50, 50]
+    data[0, 1] = [100, 100, 100]
+    data[0, 2] = [150, 150, 150]
+    data[1, 0] = [255, 255, 255]
+    data[1, 1] = [0, 0, 0]
+    data[1, 2] = [255, 255, 255]
+    data[2, 0] = [150, 150, 150]
+    data[2, 1] = [100, 100, 100]
+    data[2, 2] = [50, 50, 50]
+    cv2.imwrite("mypix.png", data)
+    # rb256 = cv2.imread(str(sys.argv[1]))
+    blue, green, red = cv2.split(data)
     pool = Pool(processes=PROC_NUM)
     future_blue, future_green, future_red = pool.map(bilateral_filter_own, [(blue, FILTER_DIAMETER, SIGMA_I, SIGMA_S),
                                                                             (green, FILTER_DIAMETER, SIGMA_I, SIGMA_S),
                                                                             (red, FILTER_DIAMETER, SIGMA_I, SIGMA_S)])
-    filter_opencv = cv2.bilateralFilter(rb256, FILTER_DIAMETER, SIGMA_I, SIGMA_S)
+    filter_opencv = cv2.bilateralFilter(data, FILTER_DIAMETER, SIGMA_I, SIGMA_S)
     cv2.imwrite("how should look.jpg", filter_opencv)
     mered_own = cv2.merge((future_blue, future_green, future_red))
     cv2.imwrite("my merge.jpg", mered_own)
