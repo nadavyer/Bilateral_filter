@@ -1,3 +1,5 @@
+import sys
+
 import numpy as np
 import cv2
 import math
@@ -14,13 +16,13 @@ def distance(x, y, i, j):
 
 
 def gaussian(x, sigma):
-    return (1.0 / (2 * math.pi * (sigma ** 2))) * math.exp(- (x ** 2) / (2 * sigma ** 2))
+    return (1.0 / (2 * math.pi * (sigma ** 2))) * math.exp(-(x ** 2) / (0.5 * (sigma ** 2)))
 
 
 def apply_bilateral_filter(source, filtered_image, row, col, diameter, sigma_i, sigma_s):
     hl = int(diameter/2)
     i_filtered = 0
-    Wp = 0
+    wp = 0
     i = 0
     while i < diameter:
         j = 0
@@ -29,14 +31,14 @@ def apply_bilateral_filter(source, filtered_image, row, col, diameter, sigma_i, 
             while j < diameter:
                 neighbour_col = int(col - (hl - j))
                 if len(source) > neighbour_col >= 0:
-                    gi = gaussian(source[neighbour_row][neighbour_col] - source[row][col], sigma_i)
-                    gs = gaussian(distance(neighbour_row, neighbour_col, row, col), sigma_s)
-                    w = gi * gs
+                    gr = gaussian(abs(source[row][col] - source[neighbour_row][neighbour_col]), sigma_i)
+                    gs = gaussian(distance(row, col, neighbour_row, neighbour_col), sigma_s)
+                    w = gr * gs
                     i_filtered += source[neighbour_row][neighbour_col] * w
-                    Wp += w
+                    wp += w
                 j += 1
         i += 1
-    i_filtered = i_filtered / Wp
+    i_filtered = i_filtered / wp
     filtered_image[row][col] = i_filtered
 
 
@@ -78,8 +80,9 @@ if __name__ == "__main__":
     data[2, 0] = [150, 150, 150]
     data[2, 1] = [100, 100, 100]
     data[2, 2] = [50, 50, 50]
+
     cv2.imwrite("mypix.png", data)
-    # rb256 = cv2.imread(str(sys.argv[1]))
+    # kid = cv2.imread(str(sys.argv[1]))
     blue, green, red = cv2.split(data)
     pool = Pool(processes=PROC_NUM)
     future_blue, future_green, future_red = pool.map(bilateral_filter_own, [(blue, FILTER_DIAMETER, SIGMA_I, SIGMA_S),
