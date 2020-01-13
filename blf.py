@@ -16,10 +16,10 @@ def distance(x, y, i, j):
 
 
 def gaussian(x, sigma):
-    return (1.0 / (2 * math.pi * (sigma ** 2))) * math.exp(-(x ** 2) / (0.5 * (sigma ** 2)))
+    return (1 / (2 * math.pi * (sigma ** 2))) * math.exp(-(x ** 2) / (2 * (sigma ** 2)))
 
 
-def apply_bilateral_filter(source, filtered_image, row, col, diameter, sigma_i, sigma_s):
+def apply_bilateral_filter(source, filtered_image, row, col, diameter, sigma_r, sigma_s):
     hl = int(diameter/2)
     i_filtered = 0
     wp = 0
@@ -27,19 +27,27 @@ def apply_bilateral_filter(source, filtered_image, row, col, diameter, sigma_i, 
     while i < diameter:
         j = 0
         neighbour_row = int(row - (hl - i))
-        if len(source) > neighbour_row >= 0:
+        if 0 <= neighbour_row < len(source):
             while j < diameter:
                 neighbour_col = int(col - (hl - j))
-                if len(source) > neighbour_col >= 0:
-                    gr = gaussian(abs(source[row][col] - source[neighbour_row][neighbour_col]), sigma_i)
+                if 0 <= neighbour_col < len(source):
+                    gr = gaussian(abs(source[row][col] - source[neighbour_row][neighbour_col]), sigma_r)
                     gs = gaussian(distance(row, col, neighbour_row, neighbour_col), sigma_s)
-                    w = gr * gs
-                    i_filtered += source[neighbour_row][neighbour_col] * w
+                    print("************")
+                    print("the point i want to color: " "( " + str(row) + "," + str(col) + ")")
+                    print("the neighbor: (" + str(neighbour_row) + ", " + str(neighbour_col) + ")")
+                    print("gr: " + str(gr))
+                    print("gs: " + str(gs))
+                    # w = gr * gs
+                    w = gr
+                    i_filtered += w * source[neighbour_row][neighbour_col]
                     wp += w
                 j += 1
         i += 1
     i_filtered = i_filtered / wp
-    filtered_image[row][col] = i_filtered
+    filtered_image[row][col] = int(i_filtered)
+    print("the color val of the new pixle is:!")
+    print(i_filtered)
 
 
 def bilateral_filter_own(args):
@@ -60,35 +68,38 @@ if __name__ == "__main__":
 
     # cv2.imwrite("pixelim.jpg", pixels)
     # arr = np.array(pixels, dtype=np.uint8)
-    data = np.zeros((3, 3, 3), dtype=np.uint8)
-    # data[0, 0] = [255, 255, 255]
-    # data[0, 1] = [255, 255, 255]
-    # data[0, 2] = [255, 255, 255]
+    # data = np.zeros((3, 3, 3), dtype=np.uint8)
+    data = np.zeros((3, 3, 1), dtype=np.uint8)
+    data[0, 0] = 255
+    data[0, 1] = 255
+    data[0, 2] = 255
+    data[1, 0] = 255
+    data[1, 1] = 0
+    data[1, 2] = 255
+    data[2, 0] = 255
+    data[2, 1] = 255
+    data[2, 2] = 255
+
+    # data[0, 0] = [50, 50, 50]
+    # data[0, 1] = [100, 100, 100]
+    # data[0, 2] = [150, 150, 150]
     # data[1, 0] = [255, 255, 255]
     # data[1, 1] = [0, 0, 0]
     # data[1, 2] = [255, 255, 255]
-    # data[2, 0] = [255, 255, 255]
-    # data[2, 1] = [255, 255, 255]
-    # data[2, 2] = [255, 255, 255]
+    # data[2, 0] = [150, 150, 150]
+    # data[2, 1] = [100, 100, 100]
+    # data[2, 2] = [50, 50, 50]
 
-    data[0, 0] = [50, 50, 50]
-    data[0, 1] = [100, 100, 100]
-    data[0, 2] = [150, 150, 150]
-    data[1, 0] = [255, 255, 255]
-    data[1, 1] = [0, 0, 0]
-    data[1, 2] = [255, 255, 255]
-    data[2, 0] = [150, 150, 150]
-    data[2, 1] = [100, 100, 100]
-    data[2, 2] = [50, 50, 50]
-
-    cv2.imwrite("mypix.png", data)
-    # kid = cv2.imread(str(sys.argv[1]))
-    blue, green, red = cv2.split(data)
+    cv2.imwrite("amypix.png", data)
+    # kid = cv2.imread(str(sys.argv[1]), 0)
+    # blue, green, red = cv2.split(data)
     pool = Pool(processes=PROC_NUM)
-    future_blue, future_green, future_red = pool.map(bilateral_filter_own, [(blue, FILTER_DIAMETER, SIGMA_I, SIGMA_S),
-                                                                            (green, FILTER_DIAMETER, SIGMA_I, SIGMA_S),
-                                                                            (red, FILTER_DIAMETER, SIGMA_I, SIGMA_S)])
+    # future_blue, future_green, future_red = pool.map(bilateral_filter_own, [(blue, FILTER_DIAMETER, SIGMA_I, SIGMA_S),
+    #                                                                         (green, FILTER_DIAMETER, SIGMA_I, SIGMA_S),
+    #                                                                         (red, FILTER_DIAMETER, SIGMA_I, SIGMA_S)])
+    grey_kid_filtered = bilateral_filter_own(args=[data, FILTER_DIAMETER, SIGMA_I, SIGMA_S])
     filter_opencv = cv2.bilateralFilter(data, FILTER_DIAMETER, SIGMA_I, SIGMA_S)
     cv2.imwrite("how should look.jpg", filter_opencv)
-    mered_own = cv2.merge((future_blue, future_green, future_red))
-    cv2.imwrite("my merge.jpg", mered_own)
+    # mered_own = cv2.merge((future_blue, future_green, future_red))
+    # cv2.imwrite("my merge.jpg", mered_own)
+    cv2.imwrite("my merge.jpg", grey_kid_filtered)
