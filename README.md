@@ -1,4 +1,4 @@
-
+HOW TO:
 
 source make_env.bash
 
