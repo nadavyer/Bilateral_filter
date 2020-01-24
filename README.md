@@ -1,6 +1,4 @@
 
- 
-how to
 
 source make_env.bash
 
